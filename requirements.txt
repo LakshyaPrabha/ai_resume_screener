@@ -1,0 +1,6 @@
+django>=4.2
+groq
+PyPDF2
+python-dotenv
+djangorestframework
+whitenoise

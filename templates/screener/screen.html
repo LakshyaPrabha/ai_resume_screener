@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block title %}Screen Resume — ResumeAI{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>🔍 Screen Your Resume</h1>
+  <p>Paste your resume or upload a PDF and get instant ATS analysis</p>
+</div>
+
+<form method="post" enctype="multipart/form-data" id="screenForm">
+  {% csrf_token %}
+  <div class="grid-2" style="align-items:start;">
+
+    <!-- LEFT: JD -->
+    <div>
+      <div class="card mb-2">
+        <h2 class="card-title">Job Details</h2>
+        <div class="form-group">
+          <label>Job Title *</label>
+          <input type="text" name="job_title" placeholder="e.g. Python Backend Developer" required />
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label>Job Description *</label>
+          <textarea name="job_description" rows="12" placeholder="Paste the full job description here..." required></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: RESUME -->
+    <div>
+      <div class="card">
+        <h2 class="card-title">Your Resume</h2>
+
+        <!-- TABS -->
+        <div class="tabs">
+          <button type="button" class="tab-btn active" onclick="switchTab('text')">📝 Paste Text</button>
+          <button type="button" class="tab-btn" onclick="switchTab('pdf')">📄 Upload PDF</button>
+        </div>
+
+        <!-- TEXT TAB -->
+        <div class="tab-content active" id="tab-text">
+          <input type="hidden" name="input_type" id="input_type" value="text" />
+          <div class="form-group">
+            <label>Paste Resume Text *</label>
+            <textarea name="resume_text" id="resume_text" rows="14"
+              placeholder="Paste your full resume content here...&#10;&#10;Include: Summary, Skills, Experience, Projects, Education"></textarea>
+          </div>
+        </div>
+
+        <!-- PDF TAB -->
+        <div class="tab-content" id="tab-pdf">
+          <div class="form-group">
+            <label>Upload Resume PDF *</label>
+            <div id="dropzone" style="
+              border: 2px dashed var(--border);
+              border-radius: 12px;
+              padding: 2.5rem;
+              text-align: center;
+              cursor: pointer;
+              transition: all 0.2s;
+            " onclick="document.getElementById('pdfInput').click()">
+              <div style="font-size:2.5rem;">📄</div>
+              <p style="color:var(--muted);margin-top:0.5rem;">Click to upload or drag & drop</p>
+              <p style="color:var(--muted);font-size:0.8rem;">PDF only, max 5MB</p>
+              <p id="fileName" style="color:var(--primary);margin-top:0.5rem;font-weight:500;"></p>
+            </div>
+            <input type="file" name="resume_pdf" id="pdfInput" accept=".pdf" style="display:none;"
+              onchange="document.getElementById('fileName').textContent = this.files[0]?.name || ''" />
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;font-size:1rem;padding:0.8rem;" id="submitBtn">
+          🚀 Analyze Resume
+        </button>
+        <p style="color:var(--muted);font-size:0.8rem;text-align:center;margin-top:0.5rem;">
+          Takes 5-10 seconds · Powered by LLaMA 3 (Groq)
+        </p>
+      </div>
+    </div>
+  </div>
+</form>
+
+<script>
+function switchTab(type) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + type).classList.add('active');
+  document.getElementById('input_type').value = type;
+  event.target.classList.add('active');
+}
+
+document.getElementById('screenForm').addEventListener('submit', function() {
+  const btn = document.getElementById('submitBtn');
+  btn.textContent = '⏳ Analyzing...';
+  btn.disabled = true;
+});
+
+// Drag & drop
+const dz = document.getElementById('dropzone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.borderColor = 'var(--primary)'; });
+dz.addEventListener('dragleave', () => { dz.style.borderColor = 'var(--border)'; });
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.style.borderColor = 'var(--border)';
+  const file = e.dataTransfer.files[0];
+  if (file && file.type === 'application/pdf') {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document.getElementById('pdfInput').files = dt.files;
+    document.getElementById('fileName').textContent = file.name;
+  }
+});
+</script>
+{% endblock %}

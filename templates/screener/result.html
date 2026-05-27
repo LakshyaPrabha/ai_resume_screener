@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block title %}Result — ResumeAI{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-2" style="flex-wrap:wrap;gap:1rem;">
+  <div>
+    <h1 style="font-size:1.5rem;font-weight:700;color:var(--white);">📊 Analysis Result</h1>
+    <p class="text-muted text-sm">{{ screen.job_title }} · {{ screen.created_at|date:"d M Y, h:i A" }}</p>
+  </div>
+  <div class="flex gap-1">
+    <a href="{% url 'screen' %}" class="btn btn-primary btn-sm">+ New Screen</a>
+    <a href="{% url 'history' %}" class="btn btn-outline btn-sm">History</a>
+  </div>
+</div>
+
+<!-- TOP ROW -->
+<div class="grid-2 mb-2" style="align-items:start;">
+
+  <!-- SCORE CARD -->
+  <div class="card" style="text-align:center;padding:2rem;">
+    <h2 class="card-title" style="text-align:left;">ATS Score</h2>
+    <div class="score-ring">
+      <svg width="140" height="140" viewBox="0 0 140 140">
+        <circle cx="70" cy="70" r="58" fill="none" stroke="var(--border)" stroke-width="12"/>
+        <circle cx="70" cy="70" r="58" fill="none"
+          stroke="{% if score_color == 'success' %}#22c55e{% elif score_color == 'info' %}#3b82f6{% elif score_color == 'warning' %}#f59e0b{% else %}#ef4444{% endif %}"
+          stroke-width="12"
+          stroke-linecap="round"
+          stroke-dasharray="364.4"
+          stroke-dashoffset="{{ 364.4|add:'-'|add:'' }}0"
+          id="scoreCircle"
+          data-score="{{ screen.ats_score }}"
+        />
+      </svg>
+      <div class="score-text">
+        <div class="num" id="scoreNum">0</div>
+        <div class="label">/ 100</div>
+      </div>
+    </div>
+    <div style="margin-top:1rem;">
+      <span class="badge badge-{{ score_color }}" style="font-size:1rem;padding:0.4rem 1.2rem;">{{ score_label }}</span>
+    </div>
+    <p style="color:var(--muted);font-size:0.85rem;margin-top:1rem;">{{ screen.overall_feedback }}</p>
+  </div>
+
+  <!-- SKILLS -->
+  <div>
+    <div class="card mb-2">
+      <h2 class="card-title">✅ Matched Skills</h2>
+      <div class="tags">
+        {% for skill in screen.matched_skills_list %}
+          <span class="tag tag-green">{{ skill }}</span>
+        {% empty %}
+          <span class="text-muted text-sm">No matched skills found.</span>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="card">
+      <h2 class="card-title">❌ Missing Skills</h2>
+      <div class="tags">
+        {% for skill in screen.missing_skills_list %}
+          <span class="tag tag-red">{{ skill }}</span>
+        {% empty %}
+          <span class="text-muted text-sm">No missing skills — great match!</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUGGESTIONS -->
+<div class="card mb-2">
+  <h2 class="card-title">💡 Suggestions to Improve</h2>
+  {% for s in screen.suggestions_list %}
+  <div class="suggestion-item">
+    <div class="suggestion-num">{{ forloop.counter }}</div>
+    <div style="color:var(--text);">{{ s }}</div>
+  </div>
+  {% empty %}
+  <p class="text-muted">No suggestions — your resume looks good!</p>
+  {% endfor %}
+</div>
+
+<!-- RESUME TEXT -->
+<div class="card">
+  <div class="flex items-center justify-between mb-1">
+    <h2 class="card-title" style="margin-bottom:0;">📄 Submitted Resume</h2>
+    <button onclick="toggleResume()" class="btn btn-outline btn-sm" id="toggleBtn">Show</button>
+  </div>
+  <div id="resumeText" style="display:none;">
+    <pre style="background:var(--bg);padding:1rem;border-radius:10px;font-size:0.82rem;color:var(--muted);white-space:pre-wrap;max-height:400px;overflow-y:auto;">{{ screen.resume_text }}</pre>
+  </div>
+</div>
+
+<script>
+// Animate score ring
+window.addEventListener('load', () => {
+  const circle = document.getElementById('scoreCircle');
+  const numEl = document.getElementById('scoreNum');
+  const score = parseInt(circle.dataset.score);
+  const circumference = 364.4;
+  const offset = circumference - (score / 100) * circumference;
+
+  // Animate number
+  let current = 0;
+  const step = score / 60;
+  const timer = setInterval(() => {
+    current = Math.min(current + step, score);
+    numEl.textContent = Math.round(current);
+    if (current >= score) clearInterval(timer);
+  }, 16);
+
+  // Animate circle
+  circle.style.strokeDashoffset = circumference;
+  setTimeout(() => {
+    circle.style.transition = 'stroke-dashoffset 1s ease';
+    circle.style.strokeDashoffset = offset;
+  }, 100);
+});
+
+function toggleResume() {
+  const el = document.getElementById('resumeText');
+  const btn = document.getElementById('toggleBtn');
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+    btn.textContent = 'Hide';
+  } else {
+    el.style.display = 'none';
+    btn.textContent = 'Show';
+  }
+}
+</script>
+{% endblock %}

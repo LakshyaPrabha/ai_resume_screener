@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — ResumeAI{% endblock %}
+{% block content %}
+<div class="page-header flex items-center justify-between">
+  <div>
+    <h1>👋 Hello, {{ user.username }}</h1>
+    <p>Track and improve your resume ATS scores</p>
+  </div>
+  <a href="{% url 'screen' %}" class="btn btn-primary">+ Screen Resume</a>
+</div>
+
+<!-- STATS -->
+<div class="grid-3 mb-2">
+  <div class="card" style="text-align:center;">
+    <div style="font-size:2.2rem;font-weight:800;color:var(--primary);">{{ total }}</div>
+    <div style="color:var(--muted);font-size:0.9rem;margin-top:0.3rem;">Total Screens</div>
+  </div>
+  <div class="card" style="text-align:center;">
+    <div style="font-size:2.2rem;font-weight:800;color:var(--success);">{{ avg_score }}%</div>
+    <div style="color:var(--muted);font-size:0.9rem;margin-top:0.3rem;">Average ATS Score</div>
+  </div>
+  <div class="card" style="text-align:center;">
+    <div style="font-size:2.2rem;font-weight:800;color:var(--warning);">
+      {% if screens %}{{ screens.0.ats_score }}%{% else %}—{% endif %}
+    </div>
+    <div style="color:var(--muted);font-size:0.9rem;margin-top:0.3rem;">Latest Score</div>
+  </div>
+</div>
+
+<!-- RECENT SCREENS -->
+<div class="card">
+  <div class="flex items-center justify-between mb-2">
+    <h2 class="card-title" style="margin-bottom:0;">Recent Screens</h2>
+    <a href="{% url 'history' %}" class="btn btn-outline btn-sm">View All</a>
+  </div>
+  {% if screens %}
+  <table>
+    <thead>
+      <tr>
+        <th>Job Title</th>
+        <th>ATS Score</th>
+        <th>Status</th>
+        <th>Date</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in screens %}
+      <tr>
+        <td style="font-weight:500;color:var(--white);">{{ s.job_title }}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:0.75rem;">
+            <div class="progress-bar-wrap" style="width:80px;">
+              <div class="progress-bar {% if s.ats_score >= 85 %}pb-success{% elif s.ats_score >= 70 %}pb-info{% elif s.ats_score >= 50 %}pb-warning{% else %}pb-danger{% endif %}"
+                   style="width:{{ s.ats_score }}%;"></div>
+            </div>
+            <span style="font-weight:600;">{{ s.ats_score }}%</span>
+          </div>
+        </td>
+        <td>
+          {% if s.ats_score >= 85 %}<span class="badge badge-success">Excellent</span>
+          {% elif s.ats_score >= 70 %}<span class="badge badge-info">Good</span>
+          {% elif s.ats_score >= 50 %}<span class="badge badge-warning">Average</span>
+          {% else %}<span class="badge badge-danger">Poor</span>{% endif %}
+        </td>
+        <td class="text-muted text-sm">{{ s.created_at|date:"d M Y" }}</td>
+        <td><a href="{% url 'result' s.pk %}" class="btn btn-outline btn-sm">View</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="text-align:center;padding:3rem;color:var(--muted);">
+    <div style="font-size:3rem;margin-bottom:1rem;">📄</div>
+    <p>No screens yet. Start by screening your resume!</p>
+    <a href="{% url 'screen' %}" class="btn btn-primary mt-2">Screen Now</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
